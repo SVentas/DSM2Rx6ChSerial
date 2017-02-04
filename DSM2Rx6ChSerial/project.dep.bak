@@ -1,0 +1,44 @@
+# DO NOT DELETE
+./obj/boot.o : \
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8ssc.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\lib\GLOBAL~1.INC\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./obj/cyrf6936.o :  ./lib/Counter8.h ./lib/E2PROM.h ./lib/PSoCAPI.h\
+   ./lib/PSOCGP~1.H ./lib/SPIM.h ./lib/TX8.h\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.h\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\CYRF6936.h
+./obj/main.o :  ./lib/Counter8.h ./lib/E2PROM.h ./lib/PSoCAPI.h\
+   ./lib/PSOCGP~1.H ./lib/SPIM.h ./lib/TX8.h\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.h\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\CYRF6936.h
+./lib/obj/counter8.o :  ./lib/Counter8.inc\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./lib/obj/counter8int.o :  ./lib/Counter8.inc\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./lib/obj/e2prom.o :  ./lib/E2PROM.inc\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/E2PROM~1.INC\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./lib/obj/psocconfig.o :  ./lib/GLOBAL~1.INC\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./lib/obj/psocconfigtbl.o : \
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc
+./lib/obj/psocgpioint.o :  ./lib/PSOCGP~1.INC\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc
+./lib/obj/spim.o :  ./lib/SPIM.inc\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./lib/obj/spimint.o :  ./lib/SPIM.inc\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./lib/obj/tx8.o :  ./lib/TX8.inc\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./lib/obj/tx8int.o :  ./lib/TX8.inc\
+   C:/PROGRA~2/Cypress/PSOCDE~1/5.4/Common/CYPRES~1/tools/include/CY8C21~3/m8c.inc\
+   D:\Saro\-_ELEK~1\-_CYPR~1\DSM2RX~2\DSM2RX~1\memory.inc
+./lib/obj/tx8plus.o : 
