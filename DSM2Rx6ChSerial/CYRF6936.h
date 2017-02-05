@@ -64,6 +64,28 @@
 #define TX_CLR              (0x40)
 #define TX_GO               (0x80)
 
+/* TX_CFG_ADR: 0x03h */
+#define PA_SETTING0         (0x01)
+#define PA_SETTING1         (0x02)
+#define PA_SETTING2         (0x04)
+#define DATA_MODE0          (0x08)
+#define DATA_MODE1          (0x10)
+#define DATA_CODE_LENGTH    (0x20)
+
+#define PA_N30_DBM          (0x00)
+#define PA_N25_DBM          (0x01)
+#define PA_N20_DBM          (0x02)
+#define PA_N15_DBM          (0x03)
+#define PA_N10_DBM          (0x04)
+#define PA_N5_DBM           (0x05)
+#define PA_0_DBM            (0x06)
+#define PA_4_DBM            (0x07)
+
+#define MODE_1MBPS          (0x00)
+#define MODE_8DR            (0x08)
+#define MODE_DDR            (0x10)
+#define MODE_SDR            (0x18)
+
 /* TX_IRQ_STATUS_ADR: 0x04h */
 #define TXE_IRQ             (0x01)
 #define TXC_IRQ             (0x02)
@@ -82,6 +104,15 @@
 #define RXB8_IRQEN          (0x10)
 #define RXB16_IRQEN         (0x20)
 #define RX_GO               (0x80)
+
+/* RX_CFG_ADR: 0x06h */
+#define VLD_EN              (0x01)
+#define RXOW_EN             (0x02)
+#define FAST_TURN_EN        (0x08)
+#define HILO                (0x10)
+#define ATT                 (0x20)
+#define LNA                 (0x40)
+#define EGC_EN              (0x80)
 
 /* RX_IRQ_STATUS_ADR: 0x07h */
 #define RXE_IRQ             (0x01)
@@ -103,6 +134,25 @@
 #define PKT_ERR             (0x40)
 #define RX_ACK              (0x80)
 
+/* XTAL_CTRL_ADR: 0x0Ch */
+#define FRQ0                (0x01)
+#define FRQ1                (0x02)
+#define FRQ2                (0x04)
+#define XSIRQ_EN            (0x20)
+#define XOUT_FN0            (0x40)
+#define XOUT_FN1            (0x80)
+
+#define FREQ_12MHZ          (0x00)
+#define FREQ_6MHZ           (0x01)
+#define FREQ_3MHZ           (0x02)
+#define FREQ_1P5MHZ         (0x03)
+#define FREQ_P75MHZ         (0x04)
+
+#define FNC_XOUT_FREQ       (0x00)
+#define FNC_PA_N            (0x40)
+#define FNC_RAD_STREAM      (0x80)
+#define FNC_GPIO            (0xC0)
+
 /* IO_CFG_ADR: 0x0Dh */
 #define IRQ_GPIO            (0x01)
 #define SPI_3PIN            (0x02)
@@ -121,6 +171,37 @@
 #define END_STATE2          (0x10)
 #define FRC_END             (0x20)
 #define ACK_EN              (0x80)
+
+#define END_STATE_SLEEP     (0x00)
+#define END_STATE_IDLE      (0x04)
+#define END_STATE_TXSYNTH   (0x08)
+#define END_STATE_RXSYNTH   (0x0C)
+#define END_STATE_RX        (0x10)
+
+#define ACK_TO_4X           (0x00)
+#define ACK_TO_8X           (0x01)
+#define ACK_TO_12X          (0x02)
+#define ACK_TO_15X          (0x03)
+
+/* FRAMING_CFG_ADR: 0x10h */
+#define SOP_TH0             (0x01)
+#define SOP_TH1             (0x02)
+#define SOP_TH2             (0x04)
+#define SOP_TH3             (0x08)
+#define SOP_TH4             (0x10)
+#define LEN_EN              (0x20)
+#define SOP_LEN             (0x40)
+#define SOP_EN              (0x80)
+
+/* EOP_CTRL_ADR: 0x14h */
+#define EOP0                (0x01)
+#define EOP1                (0x02)
+#define EOP2                (0x04)
+#define EOP3                (0x08)
+#define HINT0               (0x10)
+#define HINT1               (0x20)
+#define HINT2               (0x40)
+#define HEN                 (0x80)
 
 /* MODE_OVERRIDE_ADR 0x1Dh */
 #define RST                 (0x01)
