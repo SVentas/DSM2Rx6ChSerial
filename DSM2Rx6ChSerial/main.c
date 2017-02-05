@@ -59,7 +59,7 @@
 #define IRQ_WAIT_TIMEOUT_19MS   (19) /* 19ms window */
 #define IRQ_WAIT_TIMEOUT_12MS   (12) /* 12ms window */
 #define IRQ_WAIT_TIMEOUT_06MS   ( 6) /*  6ms window */
-#define TX_SLEEP_DELAY_X10      (25) /* 2ms5 delay  */
+#define TX_TRANSMIT_PERIOD_X10  (76) /* 7ms6 x 10 period */
 
 #define BIND_ERROR_THOLD        (0x02)
 #define RX_STATUS_ERROR         (PKT_ERR | EOP_ERR | BAD_CRC)
@@ -74,8 +74,9 @@
 
 #define BIND_NOT_DETECTED   (BIND_Data_ADDR & BIND_MASK)
 
-#define RX_CHANNEL_GET_NEXT(chn)    {(chn)+=0x02; if((chn)>=(RX_NUM_CHANNELS-0x01))(chn)%=(RX_NUM_CHANNELS-0x01);}
-#define RX_CHANNEL_UPDATE_SYNC(snc) {if((snc))(snc)--;}
+#define RX_CHANNEL_GET_NEXT_BIND(chn)   {(chn)+=0x02; if((chn)>=RX_NUM_CHANNELS)(chn)=0x00;}
+#define RX_CHANNEL_GET_NEXT_RECV(chn)   {(chn)+=0x02; if((chn)>=(RX_NUM_CHANNELS-0x01))(chn)%=(RX_NUM_CHANNELS-0x01);}
+#define RX_CHANNEL_UPDATE_SYNC(snc)     {if((snc))(snc)--;}
 
 /* GLOBAL VARIABLES */
 const BYTE pnCodes[PN_CODE_NUM_ROWS][PN_CODE_NUM_COLS][PN_CODE_SIZE] = {
@@ -122,7 +123,8 @@ const BYTE pnCodes[PN_CODE_NUM_ROWS][PN_CODE_NUM_COLS][PN_CODE_SIZE] = {
   /* Col 5 */ {0x9B, 0x75, 0xF7, 0xE0, 0x14, 0x8D, 0xB5, 0x80},
   /* Col 6 */ {0xBF, 0x54, 0x98, 0xB9, 0xB7, 0x30, 0x5A, 0x88},
   /* Col 7 */ {0x35, 0xD1, 0xFC, 0x97, 0x23, 0xD4, 0xC9, 0x88},
-  /* Col 8 */ {0x88, 0xE1, 0xD6, 0x31, 0x26, 0x5F, 0xBD, 0x40}
+  /* Col 8 */ {0xE1, 0xD6, 0x31, 0x26, 0x5F, 0xBD, 0x40, 0x93}
+  /* Col 8    {0x88, 0xE1, 0xD6, 0x31, 0x26, 0x5F, 0xBD, 0x40} */
 },
 { /* Row 4 */
   /* Col 0 */ {0xE1, 0xD6, 0x31, 0x26, 0x5F, 0xBD, 0x40, 0x93},
@@ -196,7 +198,7 @@ BYTE cyrf6936RxStartReceiving (BYTE channel)
 	BYTE rowIdx;
 
 	cyrf6936WriteBlock (CRC_SEED_LSB_ADR, (BYTE *) &crcSeed, sizeof (crcSeed));
-	/* Calculate row index of the pncodes array */
+	/* Calculate row index of the pnCodes array. */
 	rowIdx = (channel + 0x01) % PN_CODE_NUM_ROWS;
 	cyrf6936CWriteMulti (SOP_CODE_ADR,  pnCodes[rowIdx][colIdxSOP], PN_CODE_SIZE);
 	cyrf6936CWriteMulti (DATA_CODE_ADR, pnCodes[rowIdx][colIdxDATA], PN_CODE_SIZE * 0x02);
@@ -210,9 +212,9 @@ BYTE cyrf6936RxStartReceiving (BYTE channel)
  */
 void cyrf6936RxAbort (void)
 {
-	cyrf6936Write (RX_ABORT_ADR, ABORT_EN); // 0x20
+	cyrf6936Write (RX_ABORT_ADR, ABORT_EN); // Receive Abort Enable. 0x20
 	(void) cyrf6936Read (RSSI_ADR);
-	cyrf6936Write (XACT_CFG_ADR, FRC_END | END_STATE1 | END_STATE0); // 0x2C
+	cyrf6936Write (XACT_CFG_ADR, FRC_END | END_STATE_RXSYNTH); // Force to Synth Mode (RX) 0x2C
 	while (cyrf6936Read (XACT_CFG_ADR) & FRC_END) {}
 	cyrf6936Write (RX_ABORT_ADR, 0x00);
 }
@@ -230,20 +232,20 @@ void cyrf6936Init (void)
 	RST_SET_LOW;
 	for (tmp = 0x00; tmp < 0xFF; tmp++) { asm("nop"); }
 
-	cyrf6936Write (MODE_OVERRIDE_ADR, RST);     // Reset register content.
+	cyrf6936Write (MODE_OVERRIDE_ADR, RST);         // Reset register content.
 	for (tmp = 0x00; tmp < 0xFF; tmp++) { asm("nop"); }
 
-	cyrf6936Write (CLK_EN_ADR, RXF);            // Force Receive Clock Enable.
-	cyrf6936Write (AUTO_CAL_TIME_ADR, 0x3C);    // - wr AUTO_CAL_TIME_ADR = 0x3C
-	cyrf6936Write (AUTO_CAL_OFFSET_ADR, 0x14);  // - wr AUTO_CAL_OFFSET_ADR = 0x14
-	cyrf6936Write (IO_CFG_ADR, IRQ_POL);        // Set IRQ polarity to be active HIGH.
-	cyrf6936Write (TX_OFFSET_LSB_ADR, 0x55);    // - wr TX_OFFSET_LSB_ADR
-	cyrf6936Write (TX_OFFSET_MSB_ADR, 0x05);    // - wr TX_OFFSET_MSB_ADR
-	cyrf6936Write (XACT_CFG_ADR, 0x2C);         // - wr XACT_CFG_ADR = FRC_END | Synth Mode (RX)
-	cyrf6936Write (TX_CFG_ADR, 0x3F);           // - wr TX_CFG_ADR = 64 chip codes | SDR Mode | +4dBm
-	cyrf6936Write (RX_CFG_ADR, 0x48);           // - wr RX_CFG_ADR = LNA | FAST TURN EN
-	cyrf6936Write (DATA64_THOLD_ADR, 0x07);     // - wr DATA64_THOLD_ADR = 0x07 (original value - 0x0E)
-	cyrf6936Write (XTAL_CTRL_ADR, 0x80);        // - wr XTAL_CTRL_ADR XTAL - GPIO
+	cyrf6936Write (CLK_EN_ADR, RXF);                // Force Receive Clock Enable.
+	cyrf6936Write (AUTO_CAL_TIME_ADR, 0x3C);        // This is a MUST value.
+	cyrf6936Write (AUTO_CAL_OFFSET_ADR, 0x14);      // This is a MUST value.
+	cyrf6936Write (IO_CFG_ADR, IRQ_POL);            // Set IRQ polarity to be active HIGH.
+	cyrf6936Write (TX_OFFSET_LSB_ADR, 0x55);        // Set the 1MHz offset and make TX and RX
+	cyrf6936Write (TX_OFFSET_MSB_ADR, 0x05);        // frequencies to be the same.
+	cyrf6936Write (XACT_CFG_ADR, FRC_END | END_STATE_RXSYNTH); // Force to Synth Mode (RX)
+	while (cyrf6936Read (XACT_CFG_ADR) & FRC_END) {}         
+	cyrf6936Write (RX_CFG_ADR, LNA | FAST_TURN_EN); // LNA Manual Control Enable. Fast Turn Mode Enable.
+	cyrf6936Write (DATA64_THOLD_ADR, 0x07);         // This is a recommended value.
+	cyrf6936Write (XTAL_CTRL_ADR, FNC_RAD_STREAM);  // Radio data serial bit stream.
 }
 
 /**
@@ -252,10 +254,11 @@ void cyrf6936Init (void)
 void cyrf6936RxStart (BOOL fBinding)
 {
 	if (fBinding) {
-		cyrf6936Write (FRAMING_CFG_ADR, 0x4E);      // - wr FRAMING_CFG_ADR = SOP LEN 64 chips | SOP TH = 0x0E
-		cyrf6936Write (RX_OVERRIDE_ADR, FRC_RXDR | DIS_RXCRC); // - wr RX_OVERRIDE_ADR = FRC RXDR | DIS RXCRC
-		cyrf6936Write (TX_OVERRIDE_ADR, DIS_TXCRC); // - wr TX_OVERRIDE_ADR = DIS TXCRC
-		cyrf6936Write (EOP_CTRL_ADR, 0x02);         // - wr EOP_CTRL_ADR = EOP = 0x02
+		cyrf6936Write (TX_CFG_ADR, DATA_CODE_LENGTH | MODE_SDR | PA_4_DBM); // 64 chip codes. SDR Mode. PA +4dBm.
+		cyrf6936Write (FRAMING_CFG_ADR, SOP_LEN | 0x0E);        // SOP PN Code Length is 64 chips. SOP Correlator Threshold = 0x0E.
+		cyrf6936Write (RX_OVERRIDE_ADR, FRC_RXDR | DIS_RXCRC);  // Force Receive Data Rate. Disable CRC16 checker.
+		cyrf6936Write (TX_OVERRIDE_ADR, DIS_TXCRC); // Disable Transmit CRC16.
+		cyrf6936Write (EOP_CTRL_ADR, EOP1);         // EOP Symbol Count = 2.
 
 		cyrf6936CWriteMulti (DATA_CODE_ADR, pnBind[0], PN_CODE_SIZE * 0x02);
 
@@ -265,7 +268,8 @@ void cyrf6936RxStart (BOOL fBinding)
 		chnACntr = (IRQ_WAIT_TIMEOUT_12MS * TICKS_PER_MS) - 1;
 		chnBCntr = 0xFFFF;
 	} else {
-		cyrf6936Write (FRAMING_CFG_ADR, 0xEE);  // - wr FRAMING_CFG_ADR = SOP EN | SOP LEN | LEN EN | SOP TH = 0x0E
+		cyrf6936Write (TX_CFG_ADR, DATA_CODE_LENGTH | MODE_8DR | PA_4_DBM); // 64 chip codes. 8DR Mode. PA +4dBm.
+		cyrf6936Write (FRAMING_CFG_ADR, SOP_EN | SOP_LEN | LEN_EN | 0x0E);  // SOP Enable.Packet Length enable. SOP PN Code Length is 64 chips. SOP Correlator Threshold = 0x0E.
 		cyrf6936Write (RX_OVERRIDE_ADR, 0x00);
 		cyrf6936Write (TX_OVERRIDE_ADR, 0x00);
 
@@ -325,28 +329,32 @@ void channelUpdate (void)
 		if (fSyncLocked) {
 			if ((chnASync == 0x00) && (chnBSync == 0x00)) {
 				fSyncLocked = FALSE;
-				RX_CHANNEL_GET_NEXT (chnBNum);
+				RX_CHANNEL_GET_NEXT_RECV (chnBNum);
 			}
 		} else if (chnBSync == 0x00) {
-			RX_CHANNEL_GET_NEXT (chnBNum);
+			RX_CHANNEL_GET_NEXT_RECV (chnBNum);
 		}
 
-		if ((chnANum == chnBNum) && !fBinding) {
-			RX_CHANNEL_GET_NEXT (chnBNum);
+		if (chnANum == chnBNum) {
+			RX_CHANNEL_GET_NEXT_RECV (chnBNum);
 		}
 	} else {
 		RX_CHANNEL_UPDATE_SYNC (chnASync);
 		if (fSyncLocked) {
 			if ((chnASync == 0x00) && (chnBSync == 0x00)) {
 				fSyncLocked = FALSE;
-				RX_CHANNEL_GET_NEXT (chnANum);
+				RX_CHANNEL_GET_NEXT_RECV (chnANum);
 			}
 		} else if (chnASync == 0x00) {
-			RX_CHANNEL_GET_NEXT (chnANum);
+			if (fBinding) {
+				RX_CHANNEL_GET_NEXT_BIND (chnANum);
+			} else {
+				RX_CHANNEL_GET_NEXT_RECV (chnANum);
+			}
 		}
 
 		if ((chnANum == chnBNum) && !fBinding) {
-			RX_CHANNEL_GET_NEXT (chnANum);
+			RX_CHANNEL_GET_NEXT_RECV (chnANum);
 		}
 	}
 }
@@ -463,6 +471,10 @@ void main(void)
 		/* Process ChannelA timeout. */
 		if (chnACntr == 0x0000) {
 			if (fTransmitting) {
+				M8C_DisableGInt;
+				chnACntr = ((TX_TRANSMIT_PERIOD_X10 * TICKS_PER_MS) / 10) - 1;
+				M8C_EnableGInt;
+
 				cyrf6936TxStartTransmitting ();
 			} else if (fBinding && chnASync) {
 				cyrf6936RxAbort ();
@@ -475,6 +487,10 @@ void main(void)
 				crcSeed = 0x0000; /* In TRANSMIT Mode crcSeed is a packet counter. */
 				fBinding = FALSE;
 				fTransmitting = TRUE;
+
+				M8C_DisableGInt;
+				chnACntr = ((TX_TRANSMIT_PERIOD_X10 * TICKS_PER_MS) / 10) - 1;
+				M8C_EnableGInt;
 
 				cyrf6936TxStartTransmitting ();
 			} else {
@@ -537,7 +553,7 @@ void main(void)
 }
 
 /**
- *
+ * GPIO Interrupt Service Routine.
  */
 #pragma interrupt_handler CYRF6936_IRQ_ISR
 void CYRF6936_IRQ_ISR (void)
@@ -573,7 +589,6 @@ void CYRF6936_IRQ_ISR (void)
 		} else {
 			/* In TRANSMIT Mode crcSeed is a packet counter. */
 			crcSeed++;
-			chnACntr = ((TX_SLEEP_DELAY_X10 * TICKS_PER_MS) / 10) - 1;
 		}
 
 		/* Clear any pending GPIO interrupts. */
@@ -610,7 +625,7 @@ void CYRF6936_IRQ_ISR (void)
 	cyrf6936ReadMulti (RX_BUFFER_ADR, cyrf6936Buf, tmpVal);
 
 	/* End reception. */
-	cyrf6936Write (XACT_CFG_ADR, FRC_END | END_STATE1 | END_STATE0); // 0x2C
+	cyrf6936Write (XACT_CFG_ADR, FRC_END | END_STATE_RXSYNTH); // 0x2C
 	while (cyrf6936Read (XACT_CFG_ADR) & FRC_END) {}
 
 	if (fBinding) {
@@ -679,7 +694,7 @@ void CYRF6936_IRQ_ISR (void)
 }
 
 /**
- *
+ * Counter8 Interrupt Service Routine.
  */
 #pragma interrupt_handler Counter8_ISR
 void Counter8_ISR (void)
@@ -689,8 +704,10 @@ void Counter8_ISR (void)
 }
 
 /**
- *
+ * Sleep_Timer Interrupt Service Routine.
  */
+#define BIND_CLK_DIV        (0x04)
+#define TRANSMIT_CLK_DIV    (0x10)
 #pragma interrupt_handler Sleep_Timer_ISR
 void Sleep_Timer_ISR (void)
 {
@@ -698,12 +715,12 @@ void Sleep_Timer_ISR (void)
 
 	clkDiv++;
 	if (fBinding) {
-		if (clkDiv >= 4) {
+		if (clkDiv >= BIND_CLK_DIV) {
 			clkDiv = 0x00;
 			LED_TOGGLE;
 		}
 	} else if (fTransmitting) {
-		if (clkDiv >= 16) {
+		if (clkDiv >= TRANSMIT_CLK_DIV) {
 			clkDiv = 0x00;
 			LED_TOGGLE;
 		}
