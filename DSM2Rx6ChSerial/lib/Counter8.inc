@@ -26,7 +26,7 @@ Counter8_INT_MASK:                         equ 0x01
 ; Constants for Counter8 user defined values
 ;--------------------------------------------------
 
-Counter8_PERIOD:                           equ 0x63
+Counter8_PERIOD:                           equ 0xc7
 Counter8_COMPARE_VALUE:                    equ 0x00
 
 

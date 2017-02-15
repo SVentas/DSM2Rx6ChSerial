@@ -23,7 +23,7 @@ LoadConfigTBL_dsm2rx6chserial_Bank0:
 ;  Instance name Counter8, User Module Counter8
 ;       Instance name Counter8, Block Name CNTR8(DBB00)
 	db		23h, 00h		;Counter8_CONTROL_REG(DBB00CR0)
-	db		21h, 63h		;Counter8_PERIOD_REG(DBB00DR1)
+	db		21h, c7h		;Counter8_PERIOD_REG(DBB00DR1)
 	db		22h, 00h		;Counter8_COMPARE_REG(DBB00DR2)
 ;  Instance name E2PROM, User Module E2PROM
 ;  Instance name SPIM, User Module SPIM
@@ -67,7 +67,7 @@ LoadConfigTBL_dsm2rx6chserial_Bank1:
 	db		2ah, 7dh		;SPIM_OUTPUT_REG   (DCB02OU)
 ;  Instance name TX8, User Module TX8
 ;       Instance name TX8, Block Name TX8(DCB03)
-	db		2ch, 1dh		;TX8_FUNC_REG     (DCB03FN)
+	db		2ch, 0dh		;TX8_FUNC_REG     (DCB03FN)
 	db		2dh, 01h		;TX8_INPUT_REG    (DCB03IN)
 	db		2eh, 46h		;TX8_OUTPUT_REG   (DCB03OU)
 ;  Global Register values Bank 1

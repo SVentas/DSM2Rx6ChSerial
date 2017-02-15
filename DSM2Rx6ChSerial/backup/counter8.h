@@ -63,7 +63,7 @@ extern BYTE bCounter8_ReadCompareValue(void);       // Deprecated
 // Constants for Counter8 user defined values
 //--------------------------------------------------
 
-#define Counter8_PERIOD                        ( 0x63 )
+#define Counter8_PERIOD                        ( 0xc7 )
 #define Counter8_COMPARE_VALUE                 ( 0x00 )
 
 

@@ -18,14 +18,14 @@
 
 ; 0 40 80 C0 100 140 180 1C0 200 240 280 2C0 300 340 380 3C0 (+) Base Address
 
-  W  W  W  W  W   W   W   W   W   W   W   W   W   W   W   W ;    Base Address 0 
-  W  W  W  W  W   W   W   W   W   W   W   W   W   W   W   W ;    Base Address 400 
-  W  W  W  W  W   W   W   W   W   W   W   W   W   W   W   W ;    Base Address 800 
-  W  W  W  W  W   W   W   W   W   W   W   W   W   W   W   W ;    Base Address C00 
-  W  W  W  W  W   W   W   W   W   W   W   W   W   W   W   W ;    Base Address 1000 
-  W  W  W  W  W   W   W   W   W   W   W   W   W   W   W   W ;    Base Address 1400 
-  W  W  W  W  W   W   W   W   W   W   W   W   W   W   W   W ;    Base Address 1800 
-  W  W  W  W  W   W   W   W   W   W   W   W   W   W   W   R ;    Base Address 1C00
+  U  U  U  U  U   U   U   U   U   U   U   U   U   U   U   U ;    Base Address 0 
+  U  U  U  U  U   U   U   U   U   U   U   U   U   U   U   U ;    Base Address 400 
+  U  U  U  U  U   U   U   U   U   U   U   U   U   U   U   U ;    Base Address 800 
+  U  U  U  U  U   U   U   U   U   U   U   U   U   U   U   U ;    Base Address C00 
+  U  U  U  U  U   U   U   U   U   U   U   U   U   U   U   U ;    Base Address 1000 
+  U  U  U  U  U   U   U   U   U   U   U   U   U   U   U   U ;    Base Address 1400 
+  U  U  U  U  U   U   U   U   U   U   U   U   U   U   U   U ;    Base Address 1800 
+  U  U  U  U  U   U   U   U   U   U   U   U   U   U   U   U ;    Base Address 1C00
 ; End 8K parts 
 
 
