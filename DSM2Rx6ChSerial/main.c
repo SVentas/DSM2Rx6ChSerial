@@ -51,15 +51,6 @@
 
 #define TICKS_PER_MS            (5)
 
-#define IRQ_WAIT_TIMEOUT_48MS   (48) /* 48ms window */
-#define IRQ_WAIT_TIMEOUT_24MS   (24) /* 24ms window */
-#define IRQ_WAIT_TIMEOUT_22MS   (22) /* 22ms window */
-#define IRQ_WAIT_TIMEOUT_20MS   (20) /* 20ms window */
-#define IRQ_WAIT_TIMEOUT_12MS   (12) /* 12ms window */
-#define IRQ_WAIT_TIMEOUT_06MS   ( 6) /*  6ms window */
-
-#define TX_TRANSMIT_PERIOD_X5   (38) /* 7ms6 x 5 period */
-
 #define BIND_ERROR_THOLD        (0x02)
 #define RX_STATUS_ERROR         (PKT_ERR | EOP_ERR | BAD_CRC)
 
@@ -71,13 +62,13 @@
 #define LED_OFF             (LED_Data_ADDR |=  LED_MASK)
 #define LED_TOGGLE          (LED_Data_ADDR ^=  LED_MASK)
 
-//#define IRQ_DETECTED        (IRQ_Data_ADDR & IRQ_MASK)
+#define IRQ_DETECTED        (IRQ_Data_ADDR & IRQ_MASK)
 
 #define BIND_NOT_DETECTED   (BIND_Data_ADDR & BIND_MASK)
 
-#define RX_CHANNEL_GET_NEXT_BIND(chn)   {(chn)+=0x02; if((chn)>=RX_NUM_CHANNELS)(chn)=0x00;}
-#define RX_CHANNEL_GET_NEXT_RECV(chn)   {(chn)+=0x02; if((chn)>=(RX_NUM_CHANNELS-0x01))(chn)%=(RX_NUM_CHANNELS-0x01);}
-#define RX_CHANNEL_UPDATE_SYNC(snc)     {if((snc))(snc)--;}
+#define BIND_CHANNEL_GET_NEXT(chn)  {(chn)+=0x02; if((chn)>=RX_NUM_CHANNELS)(chn)=0x00;}
+#define RECV_CHANNEL_GET_NEXT(chn)  {(chn)+=0x02; if((chn)>=(RX_NUM_CHANNELS-0x01))(chn)%=(RX_NUM_CHANNELS-0x01);}
+#define CHANNEL_UPDATE_SYNC(snc)    {if((snc))(snc)--;}
 
 /* GLOBAL VARIABLES */
 const BYTE pnCodes[43][PN_CODE_SIZE] =
@@ -203,23 +194,25 @@ void cyrf6936RxAbort (void)
 	BYTE rssi;
 	BYTE tmpVal;
 
-	cyrf6936Write (RX_ABORT_ADR, ABORT_EN); // Receive Abort Enable. 0x20
-	rssi = cyrf6936Read (RSSI_ADR);
-	if (rssi & 0x80) {
-		/* Get RX IRQ Status and RX Status. */
-		tmpVal = cyrf6936RxIrqStatusGet ();
+	do {
+		cyrf6936Write (RX_ABORT_ADR, ABORT_EN); // Receive Abort Enable. 0x20
+		rssi = cyrf6936Read (RSSI_ADR);
+		if ((rssi & SOP_RSSI) || IRQ_DETECTED) {
+			/* Get RX IRQ Status and RX Status. */
+			tmpVal = cyrf6936RxIrqStatusGet ();
 
-		/* Get received packet size. */
-		tmpVal = cyrf6936Read (RX_COUNT_ADR);
+			/* Get received packet size. */
+			tmpVal = cyrf6936Read (RX_COUNT_ADR);
 
-		/* Read data. */
-		if (tmpVal) {
-			cyrf6936ReadMulti (RX_BUFFER_ADR, cyrf6936Buf, tmpVal);
+			/* Read data. */
+			if (tmpVal) {
+				cyrf6936ReadMulti (RX_BUFFER_ADR, cyrf6936Buf, tmpVal);
+			}
 		}
-	}
-	cyrf6936Write (XACT_CFG_ADR, FRC_END | END_STATE_RXSYNTH); // Force to Synth Mode (RX) 0x2C
-	while (cyrf6936Read (XACT_CFG_ADR) & FRC_END) {}
-	cyrf6936Write (RX_ABORT_ADR, 0x00);
+		cyrf6936Write (XACT_CFG_ADR, FRC_END | END_STATE_RXSYNTH); // Force to Synth Mode (RX) 0x2C
+		while (cyrf6936Read (XACT_CFG_ADR) & FRC_END) {}
+		cyrf6936Write (RX_ABORT_ADR, 0x00);
+	} while (IRQ_DETECTED);
 }
 
 /**
@@ -231,12 +224,12 @@ void cyrf6936Init (void)
 
 	/* Toggle RST Pin */
 	RST_SET_HIGH;
-	for (tmp = 0x00; tmp < 0xFF; tmp++) { asm("nop"); }
+	for (tmp = 0xFF; tmp; tmp--) { asm("nop"); }
 	RST_SET_LOW;
-	for (tmp = 0x00; tmp < 0xFF; tmp++) { asm("nop"); }
+	for (tmp = 0xFF; tmp; tmp--) { asm("nop"); }
 
 	cyrf6936Write (MODE_OVERRIDE_ADR, RST);         // Reset register content.
-	for (tmp = 0x00; tmp < 0xFF; tmp++) { asm("nop"); }
+	for (tmp = 0xFF; tmp; tmp--) { asm("nop"); }
 
 	cyrf6936Write (CLK_EN_ADR, RXF);                // Force Receive Clock Enable.
 	cyrf6936Write (AUTO_CAL_TIME_ADR, 0x3C);        // This is a MUST value.
@@ -268,7 +261,7 @@ void cyrf6936RxStart (BOOL fBinding)
 		chnANum = 0x00;
 		chnBNum = 0x00;
 
-		chnACntr = IRQ_WAIT_TIMEOUT_12MS * TICKS_PER_MS;
+		chnACntr = 12 * TICKS_PER_MS;
 		chnBCntr = 0xFF;
 	} else {
 		cyrf6936Write (TX_CFG_ADR, DATA_CODE_LENGTH | MODE_8DR | PA_4_DBM); // 64 chip codes. 8DR Mode. PA +4dBm.
@@ -290,8 +283,8 @@ void cyrf6936RxStart (BOOL fBinding)
 		chnANum = 0x00;
 		chnBNum = RX_NUM_CHANNELS / 0x02;
 
-		chnACntr = IRQ_WAIT_TIMEOUT_24MS * TICKS_PER_MS;
-		chnBCntr = IRQ_WAIT_TIMEOUT_48MS * TICKS_PER_MS;
+		chnACntr = 23 * TICKS_PER_MS + 3;
+		chnBCntr = 47 * TICKS_PER_MS;
 	}
 }
 
@@ -329,36 +322,36 @@ void cyrf6936TxStart (void)
 void channelUpdate (void)
 {
 	if (fCRCSeedInv) {
-		RX_CHANNEL_UPDATE_SYNC (chnBSync);
+		CHANNEL_UPDATE_SYNC (chnBSync);
 		if (fSyncLocked) {
 			if ((chnASync == 0x00) && (chnBSync == 0x00)) {
 				fSyncLocked = FALSE;
-				RX_CHANNEL_GET_NEXT_RECV (chnBNum);
+				RECV_CHANNEL_GET_NEXT (chnBNum);
 			}
 		} else if (chnBSync == 0x00) {
-			RX_CHANNEL_GET_NEXT_RECV (chnBNum);
+			RECV_CHANNEL_GET_NEXT (chnBNum);
 		}
 
 		if (chnANum == chnBNum) {
-			RX_CHANNEL_GET_NEXT_RECV (chnBNum);
+			RECV_CHANNEL_GET_NEXT (chnBNum);
 		}
 	} else {
-		RX_CHANNEL_UPDATE_SYNC (chnASync);
+		CHANNEL_UPDATE_SYNC (chnASync);
 		if (fSyncLocked) {
 			if ((chnASync == 0x00) && (chnBSync == 0x00)) {
 				fSyncLocked = FALSE;
-				RX_CHANNEL_GET_NEXT_RECV (chnANum);
+				RECV_CHANNEL_GET_NEXT (chnANum);
 			}
 		} else if (chnASync == 0x00) {
 			if (fBinding) {
-				RX_CHANNEL_GET_NEXT_BIND (chnANum);
+				BIND_CHANNEL_GET_NEXT (chnANum);
 			} else {
-				RX_CHANNEL_GET_NEXT_RECV (chnANum);
+				RECV_CHANNEL_GET_NEXT (chnANum);
 			}
 		}
 
 		if ((chnANum == chnBNum) && !fBinding) {
-			RX_CHANNEL_GET_NEXT_RECV (chnANum);
+			RECV_CHANNEL_GET_NEXT (chnANum);
 		}
 	}
 }
@@ -431,10 +424,10 @@ void init (void )
 
 		if ((modelID[0] == E2PROM_EMPTY_BYTE) && (modelID[1] == E2PROM_EMPTY_BYTE) &&
 			(modelID[2] == E2PROM_EMPTY_BYTE) && (modelID[3] == E2PROM_EMPTY_BYTE)) {
-			modelID[0] = 0x3C; //0xC3;
-			modelID[1] = 0x4E; //0xB1;
-			modelID[2] = 0x3A; //0xC5;
-			modelID[3] = 0x38; //0xC7;
+			modelID[0] = 0x3C; //0xC3 inv;
+			modelID[1] = 0x4E; //0xB1 inv;
+			modelID[2] = 0x3A; //0xC5 inv;
+			modelID[3] = 0x38; //0xC7 inv;
 		}
 		fBinding = FALSE;
 	} else {
@@ -458,24 +451,27 @@ void main(void)
 	/* Clear any pending GPIO interrupts. */
 	INT_CLR0 &= ~INT_MSK0_GPIO;
 
-	/* Enable GPIO interrupts */
+	/* Enable GPIO an Sleep_Timer interrupts. */
 	M8C_EnableIntMask (INT_MSK0, INT_MSK0_GPIO | INT_MSK0_SLEEP);
 
-	/* Enable Global Interrupts */
+	/* Enable Global Interrupts. */
 	M8C_EnableGInt;
+
+	/* Clear Watchdog. */
+	M8C_ClearWDT;
 
 	Counter8_Start ();
 	if (fBinding) {
-		rssiA = cyrf6936RxStartBinding (chnANum) & 0x1F;
+		rssiA = cyrf6936RxStartBinding (chnANum) & RSSI_MASK;
 	} else {
-		rssiA = cyrf6936RxStartReceiving (chnANum) & 0x1F;
+		rssiA = cyrf6936RxStartReceiving (chnANum) & RSSI_MASK;
 	}
 
 	while (1) {
 		/* Process ChannelA timeout. */
 		if (chnACntr == 0x0000) {
 			if (fTransmitting) {
-				chnACntr = TX_TRANSMIT_PERIOD_X5;
+				chnACntr = 38; /* 7ms6 */
 				cyrf6936TxStartTransmitting ();
 			} else if (fBinding && chnASync) {
 				cyrf6936RxAbort ();
@@ -489,29 +485,37 @@ void main(void)
 				fBinding = FALSE;
 				fTransmitting = TRUE;
 
-				chnACntr = TX_TRANSMIT_PERIOD_X5;
+				chnACntr = 38; /* 7ms6 */
 				cyrf6936TxStartTransmitting ();
 			} else {
+				/* Disable GPIO interrupt. */
+				M8C_DisableIntMask (INT_MSK0, INT_MSK0_GPIO);
+
 				channelUpdate ();
 				if (fBinding) {
-					chnACntr = IRQ_WAIT_TIMEOUT_12MS * TICKS_PER_MS;
+					chnACntr = 12 * TICKS_PER_MS;
 				} else if (chnASync || chnBSync) {
-					chnACntr = IRQ_WAIT_TIMEOUT_22MS * TICKS_PER_MS;
+					chnACntr = 22 * TICKS_PER_MS;
 				} else {
 					M8C_DisableGInt;
-					chnACntr = IRQ_WAIT_TIMEOUT_48MS * TICKS_PER_MS;
-					chnBCntr = IRQ_WAIT_TIMEOUT_24MS * TICKS_PER_MS;
+					chnACntr = 47 * TICKS_PER_MS;
+					chnBCntr = 23 * TICKS_PER_MS + 3;
 					M8C_EnableGInt;
 				}
 
 				cyrf6936RxAbort ();
 
+				/* Clear any pending GPIO interrupts. */
+				INT_CLR0 &= ~INT_MSK0_GPIO;
+				/* Enable GPIO interrupt. */
+				M8C_EnableIntMask (INT_MSK0, INT_MSK0_GPIO);
+
 				if (fBinding) {
-					rssiA = cyrf6936RxStartBinding (chnANum) & 0x1F;
+					rssiA = cyrf6936RxStartBinding (chnANum) & RSSI_MASK;
 				} else {
 					crcSeed = ~crcSeed;
 					fCRCSeedInv = !fCRCSeedInv;
-					rssiB = cyrf6936RxStartReceiving (chnBNum) & 0x1F;
+					rssiB = cyrf6936RxStartReceiving (chnBNum) & RSSI_MASK;
 				}
 			}
 		}
@@ -519,21 +523,29 @@ void main(void)
 		/* Process ChannelB timeout. */
 		/* ChannelB is not used while in BIND or TRANSMIT modes. */
 		if (!fBinding && !fTransmitting && (chnBCntr == 0x0000)) {
+			/* Disable GPIO interrupt. */
+			M8C_DisableIntMask (INT_MSK0, INT_MSK0_GPIO);
+
 			channelUpdate ();
 			if (chnASync || chnBSync) {
-				chnBCntr = IRQ_WAIT_TIMEOUT_22MS * TICKS_PER_MS;
+				chnBCntr = 22 * TICKS_PER_MS;
 			} else {
 				M8C_DisableGInt;
-				chnBCntr = IRQ_WAIT_TIMEOUT_48MS * TICKS_PER_MS;
-				chnACntr = IRQ_WAIT_TIMEOUT_24MS * TICKS_PER_MS;
+				chnBCntr = 47 * TICKS_PER_MS;
+				chnACntr = 23 * TICKS_PER_MS + 3;
 				M8C_EnableGInt;
 			}
 
 			cyrf6936RxAbort ();
 
+			/* Clear any pending GPIO interrupts. */
+			INT_CLR0 &= ~INT_MSK0_GPIO;
+			/* Enable GPIO interrupt. */
+			M8C_EnableIntMask (INT_MSK0, INT_MSK0_GPIO);
+
 			crcSeed = ~crcSeed;
 			fCRCSeedInv = !fCRCSeedInv;
-			rssiA = cyrf6936RxStartReceiving (chnANum) & 0x1F;
+			rssiA = cyrf6936RxStartReceiving (chnANum) & RSSI_MASK;
 
 			if (fSyncLocked) {
 				tmpVal  = rssiA;
@@ -543,6 +555,8 @@ void main(void)
 				TX8_Write (spektrumFrame, SPEKTRUM_FRAME_SIZE);
 			}
 		}
+		/* Clear Watchdog. */
+		M8C_ClearWDT;
 	}
 }
 
@@ -580,7 +594,7 @@ void CYRF6936_IRQ_ISR (void)
 
 			Counter8_Start ();
 
-			rssiA = cyrf6936RxStartReceiving (chnANum) & 0x1F;
+			rssiA = cyrf6936RxStartReceiving (chnANum) & RSSI_MASK;
 		} else {
 			/* In TRANSMIT Mode crcSeed is a packet counter. */
 			crcSeed++;
@@ -595,14 +609,22 @@ void CYRF6936_IRQ_ISR (void)
 	 * B I N D   a n d   R E C E I V E   M o d e s
 	 */
 	if (fBinding) {
-		chnACntr = IRQ_WAIT_TIMEOUT_12MS * TICKS_PER_MS;
+		chnACntr = 12 * TICKS_PER_MS;
 	} else {
 		if (fCRCSeedInv) {
-			chnBCntr = IRQ_WAIT_TIMEOUT_24MS * TICKS_PER_MS;
-			chnACntr = IRQ_WAIT_TIMEOUT_20MS * TICKS_PER_MS;
+			if ((chnBCntr > (2 * TICKS_PER_MS)) && (chnASync || chnBSync)) {
+				chnBCntr += 22 * TICKS_PER_MS;
+			} else {
+				chnBCntr = 23 * TICKS_PER_MS + 3;
+				chnACntr = 19 * TICKS_PER_MS + 3;
+			}
 		} else {
-			chnACntr = IRQ_WAIT_TIMEOUT_24MS * TICKS_PER_MS;
-			chnBCntr = IRQ_WAIT_TIMEOUT_06MS * TICKS_PER_MS;
+			if ((chnACntr > (2 * TICKS_PER_MS)) && (chnASync || chnBSync)) {
+				chnACntr += 22 * TICKS_PER_MS;
+			} else {
+				chnACntr = 23 * TICKS_PER_MS + 3;
+				chnBCntr =  5 * TICKS_PER_MS + 3;
+			}
 		}
 	}
 
@@ -645,7 +667,7 @@ void CYRF6936_IRQ_ISR (void)
 				chnBSync = 0x00;
 			}
 		}
-		rssiA = cyrf6936RxStartBinding (chnANum) & 0x1F;
+		rssiA = cyrf6936RxStartBinding (chnANum) & RSSI_MASK;
 	} else {
 		/* Check for errors. */
 		if (rxStatus & RX_STATUS_ERROR) {
@@ -673,9 +695,9 @@ void CYRF6936_IRQ_ISR (void)
 		crcSeed = ~crcSeed;
 
 		if (fCRCSeedInv) {
-			rssiB = cyrf6936RxStartReceiving (chnBNum) & 0x1F;
+			rssiB = cyrf6936RxStartReceiving (chnBNum) & RSSI_MASK;
 		} else {
-			rssiA = cyrf6936RxStartReceiving (chnANum) & 0x1F;
+			rssiA = cyrf6936RxStartReceiving (chnANum) & RSSI_MASK;
 			if (fSyncLocked) {
 				tmpVal  = rssiA;
 				tmpVal += rssiB;
@@ -685,9 +707,6 @@ void CYRF6936_IRQ_ISR (void)
 			}
 		}
 	}
-
-	/* Clear any pending GPIO interrupts. */
-	INT_CLR0 &= ~INT_MSK0_GPIO;
 }
 
 /**

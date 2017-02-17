@@ -103,16 +103,19 @@ symbol TX8_EnableInt is unused
 
 282 bytes unused code deleted
 
-5353 bytes before Code Compression, 4641 after. 1% reduction.
+5462 bytes before Code Compression, 4738 after. 1% reduction.
 
 idata dump at output/DSM2Rx6ChSerial.idata
 
-  ROM 66% full. 5326 out of 8192 bytes used (does not include absolute areas).
+  ROM 67% full. 5423 out of 8192 bytes used (does not include absolute areas).
 
   RAM 27% full. 68 bytes used (does not include stack usage).
 
 Built with ICCM8C STD V7.05.00
 
  
-DSM2Rx6ChSerial - 0 error(s) 0 warning(s) 23:03:33
+DSM2Rx6ChSerial - 0 error(s) 0 warning(s) 12:00:02
+
+Performing Project Clean...
+done
 

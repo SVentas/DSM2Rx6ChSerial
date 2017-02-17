@@ -193,6 +193,11 @@
 #define SOP_LEN             (0x40)
 #define SOP_EN              (0x80)
 
+/* RSSI_ADR: 0x13h */
+#define LNA_STATE           (0x20)
+#define SOP_RSSI            (0x80)
+#define RSSI_MASK           (0x1F)
+
 /* EOP_CTRL_ADR: 0x14h */
 #define EOP0                (0x01)
 #define EOP1                (0x02)
