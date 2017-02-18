@@ -48,7 +48,7 @@ POWER_SET_2V7_6MHZ:     equ 02h	 ; MASK for 2.7V,  6MHZ operation
 POWER_SET_SLOW_IMO:     equ 01h  ; MASK for slow Internal Main Oscillator (IMO) 
 
 COMM_RX_PRESENT:		equ	1	;1 = TRUE
-WATCHDOG_ENABLE:		equ 0	;Watchdog Enable 1 = Enable
+WATCHDOG_ENABLE:		equ 1	;Watchdog Enable 1 = Enable
 
 CLOCK_DIV_VC1:			equ	5h	;VC1 clock divider
 CLOCK_DIV_VC1_MASK:		equ	f0h	;VC1 clock divider mask
@@ -80,9 +80,9 @@ PORT_0_INTENABLE:		equ 40h	;Port 0 interrupt enable register (PRT0IE)
 PORT_0_INTCTRL_0:		equ 0h	;Port 0 interrupt control 0 register (PRT0IC0)
 PORT_0_INTCTRL_1:		equ 40h	;Port 0 interrupt control 1 register (PRT0IC1)
 PORT_1_GLOBAL_SELECT:	equ 40h	;Port 1 global select register (PRT1GS)
-PORT_1_DRIVE_0:			equ 40h	;Port 1 drive mode 0 register (PRT1DM0)
-PORT_1_DRIVE_1:			equ bfh	;Port 1 drive mode 1 register (PRT1DM1)
-PORT_1_DRIVE_2:			equ bfh	;Port 1 drive mode 2 register (PRT1DM2)
+PORT_1_DRIVE_0:			equ 50h	;Port 1 drive mode 0 register (PRT1DM0)
+PORT_1_DRIVE_1:			equ afh	;Port 1 drive mode 1 register (PRT1DM1)
+PORT_1_DRIVE_2:			equ afh	;Port 1 drive mode 2 register (PRT1DM2)
 PORT_1_INTENABLE:		equ 0h	;Port 1 interrupt enable register (PRT1IE)
 PORT_1_INTCTRL_0:		equ 0h	;Port 1 interrupt control 0 register (PRT1IC0)
 PORT_1_INTCTRL_1:		equ 0h	;Port 1 interrupt control 1 register (PRT1IC1)

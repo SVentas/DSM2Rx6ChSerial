@@ -1,29 +1,5 @@
 Starting MAKE...
-creating project.mk 
-
-lib/counter8.asm
-
-lib/counter8int.asm
-
-lib/e2prom.asm
-
-lib/psocconfig.asm
-
-lib/psocconfigtbl.asm
-
-lib/psocgpioint.asm
-
-lib/spim.asm
-
-lib/spimint.asm
-
-lib/tx8.asm
-
-lib/tx8int.asm
-
-lib/tx8plus.asm
-
-./boot.asm
+creating project.mk -- no changes
 
 Linking..
 
@@ -36,6 +12,8 @@ LMM info: area 'virtual_registers' uses 15 bytes in SRAM page 0
 LMM info: area 'data' item of 4 bytes allocated in SRAM page 0
 
 LMM info: area 'data' item of 2 bytes allocated in SRAM page 0
+
+LMM info: area 'data' item of 1 bytes allocated in SRAM page 0
 
 LMM info: area 'data' item of 1 bytes allocated in SRAM page 0
 
@@ -103,18 +81,18 @@ symbol TX8_EnableInt is unused
 
 282 bytes unused code deleted
 
-5462 bytes before Code Compression, 4738 after. 1% reduction.
+5494 bytes before Code Compression, 4758 after. 1% reduction.
 
 idata dump at output/DSM2Rx6ChSerial.idata
 
-  ROM 67% full. 5423 out of 8192 bytes used (does not include absolute areas).
+  ROM 67% full. 5443 out of 8192 bytes used (does not include absolute areas).
 
-  RAM 27% full. 68 bytes used (does not include stack usage).
+  RAM 27% full. 69 bytes used (does not include stack usage).
 
 Built with ICCM8C STD V7.05.00
 
  
-DSM2Rx6ChSerial - 0 error(s) 0 warning(s) 12:00:02
+DSM2Rx6ChSerial - 0 error(s) 0 warning(s) 19:31:03
 
 Performing Project Clean...
 done

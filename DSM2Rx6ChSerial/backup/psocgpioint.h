@@ -134,6 +134,26 @@ BYTE			SS_IntEn_ADDR;
 #define SS_MASK 0x80
 #pragma	ioport	SS_MUXBusCtrl_ADDR:	0x1d8
 BYTE			SS_MUXBusCtrl_ADDR;
+// DBG address and mask defines
+#pragma	ioport	DBG_Data_ADDR:	0x4
+BYTE			DBG_Data_ADDR;
+#pragma	ioport	DBG_DriveMode_0_ADDR:	0x104
+BYTE			DBG_DriveMode_0_ADDR;
+#pragma	ioport	DBG_DriveMode_1_ADDR:	0x105
+BYTE			DBG_DriveMode_1_ADDR;
+#pragma	ioport	DBG_DriveMode_2_ADDR:	0x7
+BYTE			DBG_DriveMode_2_ADDR;
+#pragma	ioport	DBG_GlobalSelect_ADDR:	0x6
+BYTE			DBG_GlobalSelect_ADDR;
+#pragma	ioport	DBG_IntCtrl_0_ADDR:	0x106
+BYTE			DBG_IntCtrl_0_ADDR;
+#pragma	ioport	DBG_IntCtrl_1_ADDR:	0x107
+BYTE			DBG_IntCtrl_1_ADDR;
+#pragma	ioport	DBG_IntEn_ADDR:	0x5
+BYTE			DBG_IntEn_ADDR;
+#define DBG_MASK 0x10
+#pragma	ioport	DBG_MUXBusCtrl_ADDR:	0x1d9
+BYTE			DBG_MUXBusCtrl_ADDR;
 // TX8 address and mask defines
 #pragma	ioport	TX8_Data_ADDR:	0x4
 BYTE			TX8_Data_ADDR;

@@ -31,7 +31,7 @@
 #define SWITCH_MODE_PUMP_JUST  0x80    //Switch Mode Pump value justified
 #define TRIP_VOLTAGE           0x1     //Trip Voltage
 #define POWER_SETTING          0x8     //Power Setting 
-#define WATCHDOG_ENABLE        0x0     //Watchdog Enable 1 = Enable
+#define WATCHDOG_ENABLE        0x1     //Watchdog Enable 1 = Enable
 #define CLOCK_DIV_VC1          0x5     // VC1 clock divider 
 #define CLOCK_DIV_VC1_MASK     0xf0    // VC1 clock divider mask
 #define CLOCK_DIV_VC1_JUST     0x50    // jVC1 clock divider ustified
@@ -63,9 +63,9 @@
 #define PORT_0_INTCTRL_0       0x0     //Port 0 interrupt control 0 register (PRT0IC0)
 #define PORT_0_INTCTRL_1       0x40    //Port 0 interrupt control 1 register (PRT0IC1)
 #define PORT_1_GLOBAL_SELECT   0x40    //Port 1 global select register (PRT1GS)
-#define PORT_1_DRIVE_0         0x40    //Port 1 drive mode 0 register (PRT1DM0)
-#define PORT_1_DRIVE_1         0xbf    //Port 1 drive mode 1 register (PRT1DM1)
-#define PORT_1_DRIVE_2         0xbf    //Port 1 drive mode 2 register (PRT1DM2)
+#define PORT_1_DRIVE_0         0x50    //Port 1 drive mode 0 register (PRT1DM0)
+#define PORT_1_DRIVE_1         0xaf    //Port 1 drive mode 1 register (PRT1DM1)
+#define PORT_1_DRIVE_2         0xaf    //Port 1 drive mode 2 register (PRT1DM2)
 #define PORT_1_INTENABLE       0x0     //Port 1 interrupt enable register (PRT1IE)
 #define PORT_1_INTCTRL_0       0x0     //Port 1 interrupt control 0 register (PRT1IC0)
 #define PORT_1_INTCTRL_1       0x0     //Port 1 interrupt control 1 register (PRT1IC1)

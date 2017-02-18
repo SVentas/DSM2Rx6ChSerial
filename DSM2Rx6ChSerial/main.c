@@ -31,6 +31,11 @@
  *   CH6  - P1[6]; (TX);
  */
 
+/* Uncomment the next line to eneble Channels Hold feature. */
+#define USE_CHN_HOLD
+/* Uncomment the next line to enable DBG PIN toggling. */
+#define DEBUG_MODE
+
 /* GLOBAL DEFINITIONS */
 #define FLASH_BLOCK_SIZE        (0x0040)
 #define MODEL_ID_LENGTH         (0x0004)
@@ -49,23 +54,25 @@
 #define TRANSMIT_BUFFER_SIZE    (0x0A)
 #define TRANSMIT_PACKET_NUM     (600)
 
-#define TICKS_PER_MS            (5)
+#define TICKS_PER_1MS           (5)
+#define TICKS_PER_0MS5          (3)
 
 #define BIND_ERROR_THOLD        (0x02)
-#define RX_STATUS_ERROR         (PKT_ERR | EOP_ERR | BAD_CRC)
 
 /* MACROS */
-#define RST_SET_HIGH        (RST_Data_ADDR |=  RST_MASK)
-#define RST_SET_LOW         (RST_Data_ADDR &= ~RST_MASK)
+#define RST_SET_HIGH            (RST_Data_ADDR |=  RST_MASK)
+#define RST_SET_LOW             (RST_Data_ADDR &= ~RST_MASK)
 
-#define LED_ON              (LED_Data_ADDR &= ~LED_MASK)
-#define LED_OFF             (LED_Data_ADDR |=  LED_MASK)
-#define LED_TOGGLE          (LED_Data_ADDR ^=  LED_MASK)
+#define LED_ON                  (LED_Data_ADDR &= ~LED_MASK)
+#define LED_OFF                 (LED_Data_ADDR |=  LED_MASK)
+#define LED_TOGGLE              (LED_Data_ADDR ^=  LED_MASK)
 
-#define IRQ_DETECTED        (IRQ_Data_ADDR & IRQ_MASK)
+#define IRQ_DETECTED            (IRQ_Data_ADDR  &  IRQ_MASK)
 
-#define BIND_NOT_DETECTED   (BIND_Data_ADDR & BIND_MASK)
-
+#define BIND_NOT_DETECTED       (BIND_Data_ADDR &  BIND_MASK)
+#ifdef DEBUG_MODE
+#define DBG_PIN_TOGGLE          (DBG_Data_ADDR ^=  DBG_MASK)
+#endif
 #define BIND_CHANNEL_GET_NEXT(chn)  {(chn)+=0x02; if((chn)>=RX_NUM_CHANNELS)(chn)=0x00;}
 #define RECV_CHANNEL_GET_NEXT(chn)  {(chn)+=0x02; if((chn)>=(RX_NUM_CHANNELS-0x01))(chn)%=(RX_NUM_CHANNELS-0x01);}
 #define CHANNEL_UPDATE_SYNC(snc)    {if((snc))(snc)--;}
@@ -148,6 +155,10 @@ BYTE rssiB = 0x00;
 BOOL fBinding = FALSE;
 BOOL fTransmitting = FALSE;
 
+#ifdef USE_CHN_HOLD
+BOOL fChnHold = FALSE;
+#endif
+
 /**
  *
  */
@@ -208,6 +219,9 @@ void cyrf6936RxAbort (void)
 			if (tmpVal) {
 				cyrf6936ReadMulti (RX_BUFFER_ADR, cyrf6936Buf, tmpVal);
 			}
+#ifdef DEBUG_MODE
+			DBG_PIN_TOGGLE;
+#endif
 		}
 		cyrf6936Write (XACT_CFG_ADR, FRC_END | END_STATE_RXSYNTH); // Force to Synth Mode (RX) 0x2C
 		while (cyrf6936Read (XACT_CFG_ADR) & FRC_END) {}
@@ -259,9 +273,9 @@ void cyrf6936RxStart (BOOL fBinding)
 		cyrf6936CWriteMulti (DATA_CODE_ADR, pnCodes[40], PN_CODE_SIZE * 0x02);
 
 		chnANum = 0x00;
-		chnBNum = 0x00;
+		chnBNum = 0x01;
 
-		chnACntr = 12 * TICKS_PER_MS;
+		chnACntr = 12 * TICKS_PER_1MS;
 		chnBCntr = 0xFF;
 	} else {
 		cyrf6936Write (TX_CFG_ADR, DATA_CODE_LENGTH | MODE_8DR | PA_4_DBM); // 64 chip codes. 8DR Mode. PA +4dBm.
@@ -283,8 +297,8 @@ void cyrf6936RxStart (BOOL fBinding)
 		chnANum = 0x00;
 		chnBNum = RX_NUM_CHANNELS / 0x02;
 
-		chnACntr = 23 * TICKS_PER_MS + 3;
-		chnBCntr = 47 * TICKS_PER_MS;
+		chnACntr = 23 * TICKS_PER_1MS;
+		chnBCntr = 46 * TICKS_PER_1MS;
 	}
 }
 
@@ -326,9 +340,16 @@ void channelUpdate (void)
 		if (fSyncLocked) {
 			if ((chnASync == 0x00) && (chnBSync == 0x00)) {
 				fSyncLocked = FALSE;
+#ifdef USE_CHN_HOLD
+				if (!fChnHold)
+#endif
 				RECV_CHANNEL_GET_NEXT (chnBNum);
+ 
 			}
 		} else if (chnBSync == 0x00) {
+#ifdef USE_CHN_HOLD
+			if (!fChnHold)
+#endif
 			RECV_CHANNEL_GET_NEXT (chnBNum);
 		}
 
@@ -340,17 +361,23 @@ void channelUpdate (void)
 		if (fSyncLocked) {
 			if ((chnASync == 0x00) && (chnBSync == 0x00)) {
 				fSyncLocked = FALSE;
+#ifdef USE_CHN_HOLD
+				if (!fChnHold)
+#endif
 				RECV_CHANNEL_GET_NEXT (chnANum);
 			}
 		} else if (chnASync == 0x00) {
 			if (fBinding) {
 				BIND_CHANNEL_GET_NEXT (chnANum);
 			} else {
+#ifdef USE_CHN_HOLD
+				if (!fChnHold)
+#endif
 				RECV_CHANNEL_GET_NEXT (chnANum);
 			}
 		}
 
-		if ((chnANum == chnBNum) && !fBinding) {
+		if (chnANum == chnBNum) {
 			RECV_CHANNEL_GET_NEXT (chnANum);
 		}
 	}
@@ -493,13 +520,13 @@ void main(void)
 
 				channelUpdate ();
 				if (fBinding) {
-					chnACntr = 12 * TICKS_PER_MS;
+					chnACntr = 12 * TICKS_PER_1MS;
 				} else if (chnASync || chnBSync) {
-					chnACntr = 22 * TICKS_PER_MS;
+					chnACntr = 22 * TICKS_PER_1MS;
 				} else {
 					M8C_DisableGInt;
-					chnACntr = 47 * TICKS_PER_MS;
-					chnBCntr = 23 * TICKS_PER_MS + 3;
+					chnACntr = 46 * TICKS_PER_1MS;
+					chnBCntr = 23 * TICKS_PER_1MS;
 					M8C_EnableGInt;
 				}
 
@@ -528,11 +555,11 @@ void main(void)
 
 			channelUpdate ();
 			if (chnASync || chnBSync) {
-				chnBCntr = 22 * TICKS_PER_MS;
+				chnBCntr = 22 * TICKS_PER_1MS;
 			} else {
 				M8C_DisableGInt;
-				chnBCntr = 47 * TICKS_PER_MS;
-				chnACntr = 23 * TICKS_PER_MS + 3;
+				chnBCntr = 46 * TICKS_PER_1MS;
+				chnACntr = 23 * TICKS_PER_1MS;
 				M8C_EnableGInt;
 			}
 
@@ -567,14 +594,14 @@ void main(void)
 void CYRF6936_IRQ_ISR (void)
 {
 	BYTE tmpVal;
-	BYTE rxStatus;
+	BYTE irqStatus;
 
 	/**
 	 * T R A N S M I T   M o d e
 	 */
 	if (fTransmitting) {
 		/* Get TX IRQ Status. */
-		tmpVal = cyrf6936TxIrqStatusGet ();
+		irqStatus = cyrf6936TxIrqStatusGet ();
 
 		/* In TRANSMIT Mode crcSeed is a packet counter. */
 		if (crcSeed >= TRANSMIT_PACKET_NUM) {
@@ -599,41 +626,44 @@ void CYRF6936_IRQ_ISR (void)
 			/* In TRANSMIT Mode crcSeed is a packet counter. */
 			crcSeed++;
 		}
-
-		/* Clear any pending GPIO interrupts. */
-		INT_CLR0 &= ~INT_MSK0_GPIO;
 		return;
 	}
 
 	/**
 	 * B I N D   a n d   R E C E I V E   M o d e s
 	 */
-	if (fBinding) {
-		chnACntr = 12 * TICKS_PER_MS;
-	} else {
-		if (fCRCSeedInv) {
-			if ((chnBCntr > (2 * TICKS_PER_MS)) && (chnASync || chnBSync)) {
-				chnBCntr += 22 * TICKS_PER_MS;
-			} else {
-				chnBCntr = 23 * TICKS_PER_MS + 3;
-				chnACntr = 19 * TICKS_PER_MS + 3;
-			}
-		} else {
-			if ((chnACntr > (2 * TICKS_PER_MS)) && (chnASync || chnBSync)) {
-				chnACntr += 22 * TICKS_PER_MS;
-			} else {
-				chnACntr = 23 * TICKS_PER_MS + 3;
-				chnBCntr =  5 * TICKS_PER_MS + 3;
-			}
-		}
-	}
 
 	/* Make CYRF6936_IRQ_ISR interrupt a nested interrupt. */
 	M8C_EnableGInt;
 
-	/* Get RX IRQ Status and RX Status. */
-	tmpVal = cyrf6936RxIrqStatusGet ();
-	rxStatus = cyrf6936Read (RX_STATUS_ADR);
+	/* Get RX IRQ Status. */
+	irqStatus = cyrf6936RxIrqStatusGet ();
+
+	if (fBinding) {
+		chnACntr = 12 * TICKS_PER_1MS;
+	} else {
+		if (fCRCSeedInv) {
+			if ((irqStatus & RXE_IRQ) && (chnBCntr > (2 * TICKS_PER_1MS)) && (chnASync || chnBSync)) {
+				chnBCntr += 22 * TICKS_PER_1MS;
+#ifdef DEBUG_MODE
+				DBG_PIN_TOGGLE;
+#endif
+			} else {
+				chnBCntr = 23 * TICKS_PER_1MS + TICKS_PER_0MS5;
+				chnACntr = 19 * TICKS_PER_1MS + TICKS_PER_0MS5;
+			}
+		} else {
+			if ((irqStatus & RXE_IRQ) && (chnACntr > (2 * TICKS_PER_1MS)) && (chnASync || chnBSync)) {
+				chnACntr += 22 * TICKS_PER_1MS;
+#ifdef DEBUG_MODE
+				DBG_PIN_TOGGLE;
+#endif
+			} else {
+				chnACntr = 23 * TICKS_PER_1MS + TICKS_PER_0MS5;
+				chnBCntr =  5 * TICKS_PER_1MS + TICKS_PER_0MS5;
+			}
+		}
+	}
 
 	/* Get received packet size. */
 	tmpVal = cyrf6936Read (RX_COUNT_ADR);
@@ -649,7 +679,7 @@ void CYRF6936_IRQ_ISR (void)
 
 	if (fBinding) {
 		/* Check for errors. */
-		if (rxStatus & RX_STATUS_ERROR) {
+		if (irqStatus & RXE_IRQ) {
 			chnBSync++; /* In BIND Mode only ChannelA is used. chnBSync is a bind error counter. */
 			if (chnBSync > BIND_ERROR_THOLD) {
 				channelUpdate ();
@@ -670,7 +700,7 @@ void CYRF6936_IRQ_ISR (void)
 		rssiA = cyrf6936RxStartBinding (chnANum) & RSSI_MASK;
 	} else {
 		/* Check for errors. */
-		if (rxStatus & RX_STATUS_ERROR) {
+		if (irqStatus & RXE_IRQ) {
 			channelUpdate ();
 		} else if ((cyrf6936Buf[0] != modelID[2]) || (cyrf6936Buf[1] != modelID[3])) {
 			channelUpdate ();
@@ -685,6 +715,9 @@ void CYRF6936_IRQ_ISR (void)
 		/* Update Sync Lock first. */
 		if (chnASync && chnBSync) {
 			fSyncLocked = TRUE;
+#ifdef USE_CHN_HOLD
+			fChnHold = TRUE;
+#endif
 		}
 
 		if (fSyncLocked) {

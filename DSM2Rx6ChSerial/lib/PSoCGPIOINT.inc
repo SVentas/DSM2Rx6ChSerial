@@ -79,6 +79,17 @@ SS_IntCtrl_1_ADDR:	equ	103h
 SS_IntEn_ADDR:	equ	1h
 SS_MASK:	equ	80h
 SS_MUXBusCtrl_ADDR:	equ	1d8h
+; DBG address and mask equates
+DBG_Data_ADDR:	equ	4h
+DBG_DriveMode_0_ADDR:	equ	104h
+DBG_DriveMode_1_ADDR:	equ	105h
+DBG_DriveMode_2_ADDR:	equ	7h
+DBG_GlobalSelect_ADDR:	equ	6h
+DBG_IntCtrl_0_ADDR:	equ	106h
+DBG_IntCtrl_1_ADDR:	equ	107h
+DBG_IntEn_ADDR:	equ	5h
+DBG_MASK:	equ	10h
+DBG_MUXBusCtrl_ADDR:	equ	1d9h
 ; TX8 address and mask equates
 TX8_Data_ADDR:	equ	4h
 TX8_DriveMode_0_ADDR:	equ	104h
