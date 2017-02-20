@@ -153,7 +153,7 @@ BYTE cyrf6936RxIrqStatusGet (void)
 	/* This loop waits until master receives one byte */
 	while (!(SPIM_bReadStatus () & SPIM_SPIM_RX_BUFFER_FULL)){};
 	irqStatus = SPIM_bReadRxData ();
-	if ((irqStatus & (1 << RXC_IRQ)) && !(irqStatus & (1 << RXE_IRQ))) {
+	if ((irqStatus & (RXC_IRQ | RXE_IRQ)) != (RXC_IRQ | RXE_IRQ)) {
 		/* Send dummy data again to run SPI clock */
 		SPIM_SendTxData (SPI_DUMMY_BYTE);
 		/* This loop waits until master receives one byte */
@@ -181,7 +181,7 @@ BYTE cyrf6936TxIrqStatusGet (void)
 	/* This loop waits until master receives one byte */
 	while (!(SPIM_bReadStatus () & SPIM_SPIM_RX_BUFFER_FULL)){};
 	irqStatus = SPIM_bReadRxData ();
-	if ((irqStatus & (1 << TXC_IRQ)) && !(irqStatus & (1 << TXE_IRQ))) {
+	if ((irqStatus & (TXC_IRQ | TXE_IRQ)) != (TXC_IRQ | TXE_IRQ)) {
 		/* Send dummy data again to run SPI clock */
 		SPIM_SendTxData (SPI_DUMMY_BYTE);
 		/* This loop waits until master receives one byte */

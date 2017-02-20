@@ -23,18 +23,16 @@
  *
  *   BIND - P3[2];
  *
- *   CH1  - P1[7];
+ *   CH1  - P1[7]; (CHH)
  *   CH2  - P1[1]; (SCLK);
  *   CH3  - P1[5];
  *   CH4  - P1[0]; (SDATA);
- *   CH5  - P1[4]; (PPM);
+ *   CH5  - P1[4]; (DBG);
  *   CH6  - P1[6]; (TX);
  */
 
-/* Uncomment the next line to eneble Channels Hold feature. */
-#define USE_CHN_HOLD
 /* Uncomment the next line to enable DBG PIN toggling. */
-#define DEBUG_MODE
+//#define DEBUG_MODE
 
 /* GLOBAL DEFINITIONS */
 #define FLASH_BLOCK_SIZE        (0x0040)
@@ -55,7 +53,7 @@
 #define TRANSMIT_PACKET_NUM     (600)
 
 #define TICKS_PER_1MS           (5)
-#define TICKS_PER_0MS5          (3)
+#define TICKS_PER_0MS5          (2)
 
 #define BIND_ERROR_THOLD        (0x02)
 
@@ -68,8 +66,8 @@
 #define LED_TOGGLE              (LED_Data_ADDR ^=  LED_MASK)
 
 #define IRQ_DETECTED            (IRQ_Data_ADDR  &  IRQ_MASK)
-
-#define BIND_NOT_DETECTED       (BIND_Data_ADDR &  BIND_MASK)
+#define CHN_HOLD_ENABLED        (CHH_Data_ADDR  &  CHH_MASK)
+#define RECV_MODE_ENABLED       (BIND_Data_ADDR &  BIND_MASK)
 #ifdef DEBUG_MODE
 #define DBG_PIN_TOGGLE          (DBG_Data_ADDR ^=  DBG_MASK)
 #endif
@@ -154,10 +152,7 @@ BYTE rssiB = 0x00;
 
 BOOL fBinding = FALSE;
 BOOL fTransmitting = FALSE;
-
-#ifdef USE_CHN_HOLD
 BOOL fChnHold = FALSE;
-#endif
 
 /**
  *
@@ -340,17 +335,14 @@ void channelUpdate (void)
 		if (fSyncLocked) {
 			if ((chnASync == 0x00) && (chnBSync == 0x00)) {
 				fSyncLocked = FALSE;
-#ifdef USE_CHN_HOLD
-				if (!fChnHold)
-#endif
-				RECV_CHANNEL_GET_NEXT (chnBNum);
- 
+				if (!fChnHold) {
+					RECV_CHANNEL_GET_NEXT (chnBNum);
+				}
 			}
 		} else if (chnBSync == 0x00) {
-#ifdef USE_CHN_HOLD
-			if (!fChnHold)
-#endif
-			RECV_CHANNEL_GET_NEXT (chnBNum);
+			if (!fChnHold) {
+				RECV_CHANNEL_GET_NEXT (chnBNum);
+			}
 		}
 
 		if (chnANum == chnBNum) {
@@ -361,19 +353,17 @@ void channelUpdate (void)
 		if (fSyncLocked) {
 			if ((chnASync == 0x00) && (chnBSync == 0x00)) {
 				fSyncLocked = FALSE;
-#ifdef USE_CHN_HOLD
-				if (!fChnHold)
-#endif
-				RECV_CHANNEL_GET_NEXT (chnANum);
+				if (!fChnHold) {
+					RECV_CHANNEL_GET_NEXT (chnANum);
+				}
 			}
 		} else if (chnASync == 0x00) {
 			if (fBinding) {
 				BIND_CHANNEL_GET_NEXT (chnANum);
 			} else {
-#ifdef USE_CHN_HOLD
-				if (!fChnHold)
-#endif
-				RECV_CHANNEL_GET_NEXT (chnANum);
+				if (!fChnHold) {
+					RECV_CHANNEL_GET_NEXT (chnANum);
+				}
 			}
 		}
 
@@ -430,7 +420,7 @@ BYTE bindPacketVerify (void)
 /**
  *
  */
-void init (void )
+void systemInit (void )
 {
 	LED_ON; /* I'm alive pulse start! */
 
@@ -444,7 +434,7 @@ void init (void )
 
 	cyrf6936Init ();
 
-	if (BIND_NOT_DETECTED) {
+	if (RECV_MODE_ENABLED) {
 		E2PROM_Start ();
 		E2PROM_E2Read (MODEL_ID_ADDR_OFFSET, modelID, MODEL_ID_LENGTH);
 		E2PROM_Stop ();
@@ -473,7 +463,7 @@ void main(void)
 {
 	BYTE tmpVal;
 
-	init ();
+	systemInit ();
 
 	/* Clear any pending GPIO interrupts. */
 	INT_CLR0 &= ~INT_MSK0_GPIO;
@@ -715,9 +705,9 @@ void CYRF6936_IRQ_ISR (void)
 		/* Update Sync Lock first. */
 		if (chnASync && chnBSync) {
 			fSyncLocked = TRUE;
-#ifdef USE_CHN_HOLD
-			fChnHold = TRUE;
-#endif
+			if (CHN_HOLD_ENABLED) {
+				fChnHold = TRUE;
+			}
 		}
 
 		if (fSyncLocked) {

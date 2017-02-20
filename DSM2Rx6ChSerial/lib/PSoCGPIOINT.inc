@@ -101,6 +101,17 @@ TX8_IntCtrl_1_ADDR:	equ	107h
 TX8_IntEn_ADDR:	equ	5h
 TX8_MASK:	equ	40h
 TX8_MUXBusCtrl_ADDR:	equ	1d9h
+; CHH address and mask equates
+CHH_Data_ADDR:	equ	4h
+CHH_DriveMode_0_ADDR:	equ	104h
+CHH_DriveMode_1_ADDR:	equ	105h
+CHH_DriveMode_2_ADDR:	equ	7h
+CHH_GlobalSelect_ADDR:	equ	6h
+CHH_IntCtrl_0_ADDR:	equ	106h
+CHH_IntCtrl_1_ADDR:	equ	107h
+CHH_IntEn_ADDR:	equ	5h
+CHH_MASK:	equ	80h
+CHH_MUXBusCtrl_ADDR:	equ	1d9h
 ; LED address and mask equates
 LED_Data_ADDR:	equ	ch
 LED_DriveMode_0_ADDR:	equ	10ch

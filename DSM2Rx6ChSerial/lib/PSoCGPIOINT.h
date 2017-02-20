@@ -174,6 +174,26 @@ BYTE			TX8_IntEn_ADDR;
 #define TX8_MASK 0x40
 #pragma	ioport	TX8_MUXBusCtrl_ADDR:	0x1d9
 BYTE			TX8_MUXBusCtrl_ADDR;
+// CHH address and mask defines
+#pragma	ioport	CHH_Data_ADDR:	0x4
+BYTE			CHH_Data_ADDR;
+#pragma	ioport	CHH_DriveMode_0_ADDR:	0x104
+BYTE			CHH_DriveMode_0_ADDR;
+#pragma	ioport	CHH_DriveMode_1_ADDR:	0x105
+BYTE			CHH_DriveMode_1_ADDR;
+#pragma	ioport	CHH_DriveMode_2_ADDR:	0x7
+BYTE			CHH_DriveMode_2_ADDR;
+#pragma	ioport	CHH_GlobalSelect_ADDR:	0x6
+BYTE			CHH_GlobalSelect_ADDR;
+#pragma	ioport	CHH_IntCtrl_0_ADDR:	0x106
+BYTE			CHH_IntCtrl_0_ADDR;
+#pragma	ioport	CHH_IntCtrl_1_ADDR:	0x107
+BYTE			CHH_IntCtrl_1_ADDR;
+#pragma	ioport	CHH_IntEn_ADDR:	0x5
+BYTE			CHH_IntEn_ADDR;
+#define CHH_MASK 0x80
+#pragma	ioport	CHH_MUXBusCtrl_ADDR:	0x1d9
+BYTE			CHH_MUXBusCtrl_ADDR;
 // LED address and mask defines
 #pragma	ioport	LED_Data_ADDR:	0xc
 BYTE			LED_Data_ADDR;
