@@ -633,7 +633,7 @@ void CYRF6936_IRQ_ISR (void)
 		chnACntr = 12 * TICKS_PER_1MS;
 	} else {
 		if (fCRCSeedInv) {
-			if ((irqStatus & RXE_IRQ) && (chnBCntr > (2 * TICKS_PER_1MS)) && (chnASync || chnBSync)) {
+			if ((irqStatus & RXE_IRQ) && (chnBCntr > (TICKS_PER_1MS + TICKS_PER_0MS5)) && (chnASync || chnBSync)) {
 				chnBCntr += 22 * TICKS_PER_1MS;
 #ifdef DEBUG_MODE
 				DBG_PIN_TOGGLE;
@@ -643,7 +643,7 @@ void CYRF6936_IRQ_ISR (void)
 				chnACntr = 19 * TICKS_PER_1MS + TICKS_PER_0MS5;
 			}
 		} else {
-			if ((irqStatus & RXE_IRQ) && (chnACntr > (2 * TICKS_PER_1MS)) && (chnASync || chnBSync)) {
+			if ((irqStatus & RXE_IRQ) && (chnACntr > (TICKS_PER_1MS + TICKS_PER_0MS5)) && (chnASync || chnBSync)) {
 				chnACntr += 22 * TICKS_PER_1MS;
 #ifdef DEBUG_MODE
 				DBG_PIN_TOGGLE;
@@ -689,6 +689,8 @@ void CYRF6936_IRQ_ISR (void)
 		}
 		rssiA = cyrf6936RxStartBinding (chnANum) & RSSI_MASK;
 	} else {
+		tmpVal = 0x00; /* tmpVal becomes a error-free spektrum frame Flag. */
+
 		/* Check for errors. */
 		if (irqStatus & RXE_IRQ) {
 			channelUpdate ();
@@ -700,6 +702,8 @@ void CYRF6936_IRQ_ISR (void)
 			} else {
 				chnASync = RX_RESYNC_DELAY;
 			}
+
+			tmpVal = 0x01; /* No errors. Valid spektrum frame received. */
 		}
 
 		/* Update Sync Lock first. */
@@ -710,7 +714,7 @@ void CYRF6936_IRQ_ISR (void)
 			}
 		}
 
-		if (fSyncLocked) {
+		if (fSyncLocked && tmpVal) { /* tmpVal is a error-free spektrum frame Flag. */
 			spektrumFrameUpdate ();
 		}
 
